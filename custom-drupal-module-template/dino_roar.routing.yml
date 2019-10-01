@@ -1,0 +1,13 @@
+dino_says:
+  path: /sceptile
+  defaults:
+    _controller: Drupal\dino_roar\Controller\RoarController::roar
+  requirements:
+    _permission: 'access content'  
+
+dino_moves:
+  path: /sceptile/{param}
+  defaults:
+    _controller: Drupal\dino_roar\Controller\RoarController::move
+  requirements:
+    _permission: 'access content'      
