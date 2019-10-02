@@ -16,5 +16,5 @@ e.g. drupal router:debug | grep 'ajax'
 drupal router:debug {route machine name}
 e.g. drupal router:debug views.ajax
 
-# Find list of all running Services (with machine_name) in memory
+# Find list of all running Container Services (with machine_name) in Drupal's Memory
 drupal debug:container
