@@ -19,8 +19,7 @@ class RoarController
         // }
         // return new Response($res);
 
-        $roar = 'R'.str_repeat('0', $param).'AR!';
+        $roar = 'R' . str_repeat('0', $param) . 'AR!';
         return new Response($roar);
-
     }
 }
