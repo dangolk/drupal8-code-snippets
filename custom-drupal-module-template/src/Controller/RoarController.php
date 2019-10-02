@@ -27,6 +27,7 @@ class RoarController extends ControllerBase
     public function move($param)
     {
         $roar = $this->roarGenerator->getRoar($param);
+
         $this->loggerFactoryService->get('default')
             ->debug($roar);
         return new Response($roar);
