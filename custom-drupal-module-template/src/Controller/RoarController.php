@@ -24,6 +24,8 @@ class RoarController extends ControllerBase
         return new Response('HTTP');
     }
 
+
+
     public function move($param)
     {
         $roar = $this->roarGenerator->getRoar($param);
@@ -31,6 +33,14 @@ class RoarController extends ControllerBase
         $this->loggerFactoryService->get('default')
             ->debug($roar);
         return new Response($roar);
+    }
+
+    public function roarButFullPageStillIntact($param)
+    {
+        $roar = $this->roarGenerator->getRoar($param);
+        return [
+            '#title' => $roar
+        ];
     }
 
     public static function create(ContainerInterface $container)

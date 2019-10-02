@@ -11,3 +11,10 @@ dino_moves:
     _controller: Drupal\dino_roar\Controller\RoarController::move
   requirements:
     _permission: 'access content'      
+
+dino_roars:
+  path: /sceptile/roar/{param}
+  defaults:
+    _controller: Drupal\dino_roar\Controller\RoarController::roarButFullPageStillIntact
+  requirements:
+    _permission: 'access content'          
