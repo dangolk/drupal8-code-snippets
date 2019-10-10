@@ -35,3 +35,27 @@ function entitydemo_menu()
   );
   return $items;
 }
+
+function entitydemo_node_view($node){
+  dsm($node, 'node');
+
+  dsm($node->content['#bundle']);
+
+  $node_wrapper = entity_metadata_wrapper('node', $node);
+  // dsm($node_wrapper->bundle());
+  // dsm($node_wrapper);
+  dsm($node_wrapper->author->name->value(), 'Name of Author');
+  dsm($node_wrapper->author->mail->value(), 'Email of Author');
+  // dsm($node_wrapper->getPropertyInfo());
+  // dsm($node_wrapper->author->getPropertyInfo());
+  // dsm($node_wrapper->body->getPropertyInfo());
+  dsm($node_wrapper->body->value->value(), 'Body');
+  
+  foreach($node_wrapper->field_tags->getIterator() as $tag){
+    dsm($tag->name->value(), 'Tag Name');
+  }
+
+  $node_wrapper->field_number->set(43);
+  $node_wrapper->save();
+
+}
