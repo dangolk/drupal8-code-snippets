@@ -17,10 +17,13 @@ function videoentity_entity_info() {
     'label' => t('Video'),
     // Table for storing entity data, defined in hook_schema().
     'base table' => 'videoentity_video',
+    // Table for storing revision data.
+    'revision table' => 'videoentity_video_revision',
     // This helps Entity API know how to query your custom table.
     'entity keys' => array(
       'id' => 'id',
       'label' => 'name',
+      'revision' => 'revision_id',
     ),
     // This is a uri function provided by the Entity contrib module.
     // It's a simple wrapper around the uri method in the controller class.
@@ -55,8 +58,64 @@ function videoentity_entity_info() {
         ),
       ),
      'views controller class' => 'EntityDefaultViewsController',
+     // Custom view modes.
+     'view modes' => array(
+      'non_member' => array(
+        'label' => t('Non-Member'),
+        'custom settings' => FALSE,
+      ),
+      'member' => array(
+        'label' => t('Member'),
+        'custom settings' => FALSE,
+      ),
+     ),
   );
 
+  return $info;
+}
+
+/**
+ * Implements hook_entity_property_info().
+ */
+function videoentity_entity_property_info() {
+  $info = array();
+  $properties = &$info['video']['properties'];
+  $properties['id'] = array(
+    'label' => t('Video ID'),
+    'description' => t('The uniquie ID of the video.'),
+    'type' => 'integer',
+    'schema field' => 'id',
+  );
+  $properties['name'] = array(
+    'label' => t('Name'),
+    'description' => t('Name of the video'),
+    'type' => 'text',
+    'schema field' => 'name',
+  );
+  $properties['embedcode'] = array(
+    'label' => t('Embedcode'),
+    'description' => t('YouTube embedcode for the video'),
+    'type' => 'text',
+    'schema field' => 'embedcode',
+  );
+  $properties['created_at'] = array(
+    'label' => t('Created date'),
+    'description' => t('Date the video was created'),
+    'type' => 'date',
+    'schema field' => 'created_at',
+  );
+  $properties['updated_at'] = array(
+    'label' => t('Updated date'),
+    'description' => t('Date the video last updated'),
+    'type' => 'date',
+    'schema field' => 'updated_at',
+  );
+  $properties['duration'] = array(
+    'label' => t('Duration'),
+    'description' => t('The duration of the video in seconds'),
+    'type' => 'integer',
+    'schema field' => 'duration',
+  );
   return $info;
 }
 
@@ -74,6 +133,13 @@ function videoentity_menu() {
   $items['video/%videoentity'] = array(
     'title' => 'Video',
     'page callback' => 'videoentity_view_entity',
+    'page arguments' => array(1),
+    'access callback' => TRUE,
+  );
+  $items['video/%videoentity/%'] = array(
+    'title' => 'Video revision',
+    'load arguments' => array(2),
+    'page callback' => 'videoentity_view_revision',
     'page arguments' => array(1),
     'access callback' => TRUE,
   );
@@ -111,9 +177,15 @@ function videoentity_access_callback($op, $videoentity = NULL, $account = NULL) 
 /**
  * Menu autoloader for /video.
  */
-function videoentity_load($id) {
-  $video = entity_load('video', array($id));
-  return array_pop($video);
+function videoentity_load($id, $revision_id = NULL) {
+  if (is_numeric($revision_id)) {
+    $video = entity_revision_load('video', $revision_id);
+    return $video;
+  }
+  else {
+    $video = entity_load('video', array($id));
+    return array_pop($video);
+  }
 }
 
 /**
@@ -140,9 +212,20 @@ function videoentity_demo_page() {
  */
 function videoentity_view_entity($video) {
   drupal_set_title($video->name);
-  $video_entity = entity_view('video', array($video->id => $video));
+  $video_entity = entity_view('video', array($video->id => $video), 'member');
   kpr($video_entity);
   return $video_entity;
+}
+
+/**
+ * Callback for /video/ID/REVISION_ID.
+ *
+ * Just display the specified revision.
+ */
+function videoentity_view_revision($video) {
+  $output = videoentity_view_entity($video);
+  drupal_set_title(t('@title revision @id', array('@title' => $video->name, '@id' => $video->revision_id)));
+  return $output;
 }
 
 /**
@@ -171,7 +254,7 @@ class VideoEntity extends Entity {
  */
 class VideoEntityController extends EntityAPIController {
 
-  public function buildContent($entity, $view_mode = 'full', $langcode = NULL, $content = array()) {
+  public function buildContent($entity, $view_mode = 'non_member', $langcode = NULL, $content = array()) {
     $build = parent::buildContent($entity, $view_mode, $langcode, $content);
 
     $build['duration'] = array(
@@ -179,10 +262,18 @@ class VideoEntityController extends EntityAPIController {
       '#markup' => format_interval($entity->duration),
     );
 
-    $build['embedcode'] = array(
-      '#type' => 'markup',
-      '#markup' => '<iframe width="560" height="315" src="http://www.youtube.com/embed/'. $entity->embedcode . '" frameborder="0" allowfullscreen></iframe>',
-    );
+    if ($view_mode == 'member') {
+      $build['embedcode'] = array(
+        '#type' => 'markup',
+        '#markup' => '<iframe width="560" height="315" src="http://www.youtube.com/embed/'. $entity->embedcode . '" frameborder="0" allowfullscreen></iframe>',
+      );
+    }
+    else {
+      $build['embedcode'] = array(
+        '#type' => 'markup',
+        '#markup' => '<p><a href="http://www.youtube.com/watch?v=' . $entity->embedcode . '">Link to YouTube video</a></p>',
+      ); 
+    }
 
     return $build;
   }
@@ -200,6 +291,9 @@ class VideoEntityController extends EntityAPIController {
 
     $entity->updated_at = REQUEST_TIME;
 
+    // Always save new revisions.
+    $entity->is_new_revision = TRUE;
+
     return parent::save($entity, $transaction);
   }
 
@@ -213,4 +307,34 @@ class VideoEntityController extends EntityAPIController {
  */
 class VideoEntityUIController extends EntityDefaultUIController {
 
+  /**
+   * Generates the table headers for the overview table.
+   */
+  protected function overviewTableHeaders($conditions, $rows, $additional_header = array()) {
+    $header = $additional_header;
+    array_unshift($header, t('Video'));
+    if (!empty($this->entityInfo['exportable'])) {
+      $header[] = t('Status');
+    }
+    // Add operations with the right colspan.
+    $header[] = array('data' => t('Operations'), 'colspan' => $this->operationCount());
+    return $header;
+  }
+
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
