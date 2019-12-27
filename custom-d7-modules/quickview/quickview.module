@@ -11,7 +11,7 @@ function quickview_menu()
   $items = array();
 
   $items['node/%node/quickview'] = array(
-    'page callback' => 'quickview_node_naya',
+    'page callback' => 'quickview_node',
     'page arguments' => array(1),
     'access callback' => 'node_access',
     'access arguments' => array('view', 1),
