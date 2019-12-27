@@ -1,0 +1,22 @@
+--- quickview.module	2010-02-18 20:12:33.000000000 -0700
++++ quickview.new.module	2010-05-27 16:02:01.000000000 -0600
+@@ -29,7 +29,7 @@
+  */
+ function quickview_node_view_alter(&$build) {
+   // Only add the quickview link if the readmore link is there.
+-  if (isset($build['links']['node']['#links']['node_readmore'])) {
++  if (isset($build['links']['node']['#links']['node-readmore'])) {
+     $nid = $build['#node']->nid;
+ 
+     // Adjust the weight of the read more link.
+@@ -74,8 +74,8 @@
+   $commands[] = ajax_command_html('#node-' . $node->nid . ' .content', $html);
+   $commands[] = ajax_command_remove('#quickview-' . $node->nid );
+   return array(
+-    '#type' => 'ajax_commands',
+-    '#ajax_commands' => $commands,
++    '#type' => 'ajax',
++    '#commands' => $commands,
+   );
+ }
+ 

@@ -1,0 +1,80 @@
+<?php
+// $Id$
+
+/**
+ * @file
+ * Adds an AJAX based "quick view" link to content.
+ */
+
+function quickview_menu()
+{
+  $items = array();
+
+  $items['node/%node/quickview'] = array(
+    'page callback' => 'quickview_node_naya',
+    'page arguments' => array(1),
+    'access callback' => 'node_access',
+    'access arguments' => array('view', 1),
+    'delivery callback' => 'ajax_deliver',
+    'type' => MENU_CALLBACK,
+  );
+
+  return $items;
+}
+
+function quickview_node_view_alter(&$build) {
+  // dsm($build);
+  // Only add the quickview link if the readmore link is there.
+  if (isset($build['links']['node']['#links']['node-readmore'])) {
+    $nid = $build['#node']->nid;
+
+    // Add the AJAX JavaScript library to our link gets processed.
+    drupal_add_library('system', 'drupal.ajax');
+
+    // Add the quickview link.
+    $build['links']['quickview']['#theme'] = 'links__quicklinks';
+    $build['links']['quickview']['#attached']['js']['misc/ajax.js'] = array('weight' => JS_LIBRARY + 2);
+    $build['links']['quickview']['#attributes']['class'] = array('links', 'inline');
+    $build['links']['quickview']['#links']['quickview'] = array(
+      'title' => '↓ Quick view',
+      'href' => 'node/' . $nid . '/quickview/nojs',
+      'attributes' => array('class' => array('use-ajax', 'quickview-' . $nid)),
+    );
+  }
+}
+
+
+/**
+ * Menu callback; Show the content of a node for quickview.
+ */
+function quickview_node($node, $mode = NULL)
+{
+  // If the mode is not AJAX, redirect to the normal view of the page.
+  if ($mode != 'ajax') {
+    drupal_goto('node/' . $node->nid);
+  }
+
+  // Create the node "renderable" array.
+  $content = node_view($node);
+
+  // Remove the wrapper theming from around the node display and hide comments/links.
+  unset($content['#theme']);
+  hide($content['comments']);
+  hide($content['links']);
+
+  // Render the HTML of the node.
+  $html = render($content);
+
+  // Send the AJAX commands to the calling page.
+  $commands = array();
+  $commands[] = ajax_command_html('#node-' . $node->nid . ' .content', $html);
+  $commands[] = ajax_command_remove('.quickview-' . $node->nid);
+
+  // NOTE: this API changed after the recording of the video
+  // "ajax_commands" is now "ajax" for the #type property
+  // and the "#ajax_commands"" property should now be "#commands"
+  return array(
+    '#type' => 'ajax',
+    '#commands' => $commands,
+  );
+}

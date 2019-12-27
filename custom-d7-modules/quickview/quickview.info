@@ -1,0 +1,6 @@
+; $Id$
+name = Quick view
+description = Adds an AJAX "quick view" link to content.
+package = Example
+core = 7.x
+files[] = quickview.module
