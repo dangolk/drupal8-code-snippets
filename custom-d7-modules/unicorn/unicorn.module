@@ -1,0 +1,271 @@
+<?php
+
+function unicorn_menu(){
+  $items['user/%user/unicorn'] = array(
+    'title' => 'Unicorn',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('unicorn_form', 1),
+    'weight' => 20,
+    'access callback' => 'user_edit_access',
+    'access arguments' => array(1),
+    'type' => MENU_LOCAL_TASK,
+  );
+  return $items;
+}
+
+function unicorn_form($form_state, $account) {
+
+  if (isset($account->unicorn)) {
+    $unicorn = $account->unicorn;
+  }
+  else {
+    $unicorn = array();
+  }
+  
+  $colors = array(
+    'white' => t('white'),
+    'black' => t('black'), 
+    'gold' => t('gold'), 
+    'silver' => t('silver'), 
+    'red' => t('red'), 
+    'blue' => t('blue'), 
+    'yellow' => t('yellow'), 
+    'green' => t('green'), 
+    'orange' => t('orange'),
+    'pink' => t('pink'), 
+    'purple' => t('purple'),
+  );
+
+  $form['name'] = array(
+    '#title' => t('Name of your unicorn'),
+    '#type' => 'textfield',
+    '#default_value' => isset($unicorn['name']) ? $unicorn['name'] : '',
+  );
+  
+  $form['options'] = array(
+    '#type' => 'container',
+    '#states' => array(
+      // hide all options unless the name field is populated
+      'invisible' => array(
+        'input[name="name"]' => array('filled' => FALSE),
+      ),
+    ),
+  ); 
+  
+  $form['options']['horns'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Horns'),
+  );
+  
+  $form['options']['horns']['horns'] = array(
+    '#title' => t('Number of horns'),
+    '#type' => 'select',
+    '#options' => array(0, 1, 2),
+    '#default_value' => isset($unicorn['horns']) ? $unicorn['horns'] : 1,
+    '#description' => t('Yes, we realize that a unicorn without a single horn is not a unicorn, but this is open source folks!'),
+  );
+  
+  $form['options']['horns']['horn_color'] = array(
+    '#title' => t('Horn color'),
+    '#type' => 'select',
+    '#options' => $colors,
+    '#default_value' => isset($unicorn['horn_color']) ? $unicorn['horn_color'] : '',
+    '#states' => array(
+      // hide horn color if it is a horse (or pegasus)
+      'invisible' => array(
+        'select[name="horns"]' => array('value' => '0'),
+      ),
+    ),
+  );
+  
+  $form['options']['body'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Body'),
+  );
+  
+  $form['options']['body']['body_color'] = array(
+    '#title' => t('Body color'),
+    '#type' => 'select',
+    '#options' => $colors,
+    '#default_value' => isset($unicorn['body_color']) ? $unicorn['body_color'] : '',
+  );
+  
+  $form['options']['body']['dots'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Polka dots'),
+  );
+  
+  $form['options']['body']['dots_color'] = array(
+    '#title' => t('Polka dots color'),
+    '#type' => 'select',
+    '#options' => $colors,
+    '#default_value' => isset($unicorn['dots_color']) ? $unicorn['dots_color'] : '',
+    '#states' => array(
+      // hide color of the polka dots if the polka dots checkbox is not checked
+      'invisible' => array(
+        "input[name='dots']" => array('checked' => FALSE),
+      ),
+    ),
+  );
+  
+  $form['options']['legs'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Legs'),
+  );
+  
+  $form['options']['legs']['legs_custom'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Customize the legs'),
+  );
+  
+  $form['options']['legs']['legs'] = array(
+    '#title' => t('Number of legs'),
+    '#type' => 'select',
+    '#options' => drupal_map_assoc(array(0, 1, 2, 4, 6, 8)),
+    '#default_value' => isset($unicorn['legs']) ? $unicorn['legs'] : 4,
+    '#states' => array(
+      // disable the number of legs select list if the customize the legs checkbox is unchecked
+      'disabled' => array(
+        "input[name='legs_custom']" => array('checked' => FALSE),
+      ),
+    ),
+  );
+  
+  $form['options']['legs']['legs_color'] = array(
+    '#title' => t('Color of legs'),
+    '#type' => 'select',
+    '#options' => $colors,
+    '#default_value' => isset($unicorn['legs_color']) ? $unicorn['legs_color'] : '',
+    '#states' => array(
+      // disable the number of leg color if the customize the legs checkbox is unchecked
+      'disabled' => array(
+        'input[name="legs_custom"]' => array('checked' => FALSE),
+      ),
+      // hide the legs color if the unicorn has no legs
+      'invisible' => array(
+        'select[name="legs"]' => array('value' => '0'),
+      ),
+    ),
+  );
+  
+  $form['options']['wings'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Wings'),
+  );
+  
+  $form['options']['wings']['wings'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Wings'),
+  );
+  
+  $form['options']['wings']['wings_color'] = array(
+    '#title' => t('Color of wings'),
+    '#type' => 'select',
+    '#options' => $colors,
+    '#default_value' => isset($unicorn['wings_color']) ? $unicorn['wings_color'] : '',
+    '#states' => array(
+      // hide color of the wings if there no wings
+      'invisible' => array(
+        "input[name='wings']" => array('checked' => FALSE),
+      ),
+    ),
+  );
+  
+  $form['options']['powers'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Special powers'),    
+  );
+  $form['options']['powers']['special_powers'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Special powers'),
+    
+    '#states' => array(
+      // check this box if the power-set fieldset gets expanded
+      'checked' => array(
+        "#edit-set" => array('expanded' => TRUE),
+      ),
+    ),
+    
+  );
+  
+  $form['options']['powers']['set'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Powers'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+    
+    '#states' => array(
+      // expand this fieldset if the special_powers checkbox is checked
+      'collapsed' => array(
+        'input[name="special_powers"]' => array('checked' => FALSE),
+      ),
+    ),
+    
+  );
+  $form['options']['powers']['set']['wrap']['magic'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Magic'),
+    '#states' => array(
+      // if spells is checked, check this
+      'checked' => array(
+        'input[name="spells"]' => array('checked' => TRUE),
+      ),
+    ),
+  );
+  $form['options']['powers']['set']['wrap']['intelligence'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Extreme intelligence'),
+    '#states' => array(
+      'checked' => array(
+        'input[name="php"]' => array('checked' => TRUE),
+        'input[name="javascript"]' => array('checked' => TRUE),
+        'input[name="drupal_api"]' => array('checked' => TRUE),
+      ),
+    ),
+
+  );
+  $form['options']['powers']['set']['wrap']['spells'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Mastery of spells'),
+  );
+  $form['options']['powers']['set']['wrap']['php'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('PHP knowledge'),
+  );
+  $form['options']['powers']['set']['wrap']['javascript'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('JavaScript knowledge'),
+  );
+  $form['options']['powers']['set']['wrap']['drupal_api'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Drupal API knowledge'),
+  );
+  $form['options']['powers']['set']['wrap']['shoot_rainbows'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Shoot rainbows from horn'),
+  );
+  $form['options']['powers']['set']['wrap']['shoot_lasers'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Shoot lasers from horn'),    
+  );
+  $form['options']['powers']['set']['wrap']['mind_control'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Mind control'),
+  );
+  
+  
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Submit'),
+  );
+  
+  return $form;
+  
+}
+
+function unicorn_form_sumbit($form) {
+  dsm($form);
+  // yes, that's right, we're going to jam it into the user data field
+  user_save($data);
+  
+}

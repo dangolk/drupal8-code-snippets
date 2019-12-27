@@ -1,0 +1,6 @@
+; $Id: devel.info,v 1.11 2010/01/27 23:45:52 weitzman Exp $
+name = Unicorn
+description = Allows each user to customize a unicorn.
+core = 7.x
+files[] = unicorn.module
+package = Example
